@@ -29,7 +29,7 @@ if ("production" === process.env.NODE_ENV) {
 
 export default {
   devServer: {
-    port: 8085,
+    port: 8089,
     host: "localhost",
     contentBase: resolvePath(__dirname, "./public"),
     publicPath: "/assets/",
