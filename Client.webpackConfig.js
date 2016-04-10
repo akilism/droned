@@ -34,7 +34,14 @@ export default {
     contentBase: resolvePath(__dirname, "./public"),
     publicPath: "/assets/",
     hot: true,
+    historyApiFallback: true,
     stats: { colors: true },
+    // proxy: {
+    //   "/strike/*": {
+    //     target: "/",
+    //     ignorePath: true
+    //   }
+    // }
   },
   devtool: 'source-map',
   output: {
