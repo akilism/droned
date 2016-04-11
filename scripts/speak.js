@@ -36,13 +36,12 @@ export default function speak(text, opts, handlers) {
       utterance[opt] = (opt === 'voice') ? getVoice(opts[opt], voices) : opts[opt];
     });
 
-
     Object.keys(handlers).forEach((evt) => {
       const evtFn = handlers[evt];
-      // console.log(evt, evtFn);
       utterance.addEventListener(evt, evtFn);
     });
-    console.log(utterance);
+
+    console.log(utterance);  //stupid hack to get events to work in chrome.
     window.speechSynthesis.speak(utterance);
   }
   catch(e) {

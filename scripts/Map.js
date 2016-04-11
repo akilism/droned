@@ -1,19 +1,9 @@
 import { default as React, Component } from 'react';
 import ReactDOM from 'react-dom';
-import _ from 'ramda';
-import moment from 'moment';
 
 export default class Map extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-    	translatePos: null,
-    	marker: null,
-    	markerZoom: false,
-    	filterCountry: null,
-    	strike: null,
-    	reboundMap: true
-    };
 
     this.map = null;
     this.tileLayer = null;
@@ -61,12 +51,12 @@ export default class Map extends Component {
     const marker = L.circleMarker(strike.latLng, this.markerOptions(strike));
     const zoom = LMap.getZoom();
     marker.setRadius(Math.min(zoom + 2, 10));
-    marker.addTo(LMap);
+    // marker.addTo(LMap);
 
-    marker.on('click', (evt) => {
-      console.log('click', strike.latLng);
-      this.zoomMarker(strike, null);
-    });
+    // marker.on('click', (evt) => {
+    //   console.log('click', strike.latLng);
+    //   this.zoomMarker(strike, null);
+    // });
 
     // marker.bindPopup(strike.markerHtml);
 

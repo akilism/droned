@@ -4,16 +4,19 @@ import Map from './Map';
 import StrikeDetail from './StrikeDetail';
 import speak from './speak';
 
-import strikes from '../data/strikes.json';
-
 export default class Root extends Component {
   constructor(props) {
     super(props);
     this.state = {
       strikeIdx: 0,
-      showTitle: true
+      showTitle: true,
+      totals: {
+        children: 0,
+        civilians: 0,
+        deaths: 0
+      }
     }
-    this.validStrikes = strikes.strike.filter(this.validStrike);
+    // this.validStrikes = strikes.strike.filter(this.validStrike);
   }
 
   validStrike(strike) {
@@ -62,13 +65,18 @@ export default class Root extends Component {
   }
 
   nextStrike(canSpeak) {
-    const { strikeIdx } = this.state;
-    const newStrikeIdx = (strikeIdx + 1 >= this.validStrikes.length) ? 0 : strikeIdx + 1;
+    const { strikeIdx, totals } = this.state;
+    const {civilians, children, deaths} = totals;
+    if(strikeIdx + 1 >= this.validStrikes.length) {
+      this.setState({showTitle: true, strikeIdx: 0, totals: { children: 0, civilians: 0, deaths: 0}});
+      return;
+    }
+
+    const newStrikeIdx = strikeIdx + 1;
     const strike = this.enhancedStrike(this.validStrikes[newStrikeIdx]);
     window.history.pushState('', '', `${strike._id}`);
     window.localStorage.setItem('strike', strike._id);
-
-    console.log(strike.latLng);
+    // console.log(strike.latLng);
 
     if(canSpeak) {
       speak(strike.summary, {}, { end: () => {
@@ -82,13 +90,19 @@ export default class Root extends Component {
       }, 10000);
     }
 
-    this.setState({ strikeIdx: newStrikeIdx });
+    let newTotals = {
+      children: strike.childCount + children,
+      civilians: strike.civilianCount + civilians,
+      deaths: strike.deathCount + deaths
+    }
+
+    this.setState({ strikeIdx: newStrikeIdx, totals: newTotals });
   }
 
   startStrikes(idx) {
     const strikeIdx = idx || this.state.strikeIdx;
     const strike = this.enhancedStrike(this.validStrikes[strikeIdx]);
-    console.log(strike.latLng);
+    // console.log(strike.latLng);
     const canSpeak = speak(strike.summary, {}, { end: () => {
       setTimeout(() => {
         this.nextStrike(canSpeak);
@@ -115,36 +129,45 @@ export default class Root extends Component {
   }
 
   getTitle() {
+    const count = (this.validStrikes) ? this.validStrikes.length : '';
     return (
       <div className="title-screen" onClick={ this.hideTitle.bind(this) }>
-        <h1>{ this.validStrikes.length } Covert US Drone Strikes</h1>
+        <h1>{ count } Covert US Drone Strikes</h1>
       </div>
     );
   }
 
   componentWillMount() {
-    const strikeId = window.location.pathname.replace('/', '') || window.localStorage.getItem('strike');
-    if(strikeId) {
-      const arrIdx = this.validStrikes.findIndex((strike) => {
-        return strike._id === strikeId;
-      });
+    fetch('/strikes.json')
+    .then((response) => { return response.json(); })
+    .then((strikes) => {
+      this.validStrikes = strikes.strike.filter(this.validStrike);
+      const strikeId = window.location.pathname.replace('/', '') || window.localStorage.getItem('strike');
+      if(strikeId) {
+        const arrIdx = this.validStrikes.findIndex((strike) => {
+          return strike._id === strikeId;
+        });
 
-      if(arrIdx > -1) {
-        this.setState({ strikeIdx: arrIdx, showTitle: false });
-        this.startStrikes(arrIdx);
+        if(arrIdx > -1) {
+          this.setState({ strikeIdx: arrIdx, showTitle: false });
+          this.startStrikes(arrIdx);
+        }
+      } else {
+        this.setState({ count: this.validStrikes.length, showTitle: true });
       }
-    };
+    });
   }
 
   render() {
-    const strike = this.enhancedStrike(this.validStrikes[this.state.strikeIdx]);
-    const title = (this.state.showTitle) ? this.getTitle() : "";
-
+    const strike = (this.validStrikes) ? this.enhancedStrike(this.validStrikes[this.state.strikeIdx]) : null;
+    const title = (this.state.showTitle) ? this.getTitle() : '';
+    const map = (strike) ? (<Map strike={ strike } />) : '';
+    const detail = (strike) ? (<StrikeDetail strike={ strike } totals={ this.state.totals } />) : '';
     return (
       <div className="react-root">
         { title }
-        <Map strike={ strike } />
-        <StrikeDetail strike={ strike } />
+        { map }
+        { detail }
       </div>
     );
   }
